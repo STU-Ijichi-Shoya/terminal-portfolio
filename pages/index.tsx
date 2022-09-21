@@ -38,7 +38,7 @@ const Home: NextPage = () => {
       setTimeout(()=>{
         // clearInterval(id);
         setLoading(false);
-        setLogs((prev: any)=>[...prev,'Done!',`Type 'help' to see commands`,' ',' ']);
+        setLogs((prev: any)=>[...prev,'Done!✨✨',`Type 'help' to see commands`,' ',' ']);
       },3000);
     }
     return ()=>{
@@ -62,10 +62,10 @@ const Home: NextPage = () => {
     // terminalRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  // useEffect(()=>{
-  //   inputForm!.current!.scrollIntoView({ behavior: "smooth", block: "center" });
-  //   inputForm!.current!.focus();
-  // },[inputForm])
+  useEffect(()=>{
+    inputForm?.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    inputForm?.current?.focus();
+  },[inputForm])
 
   const stdout = (msg: string) => {
     console.log('stdout_log->', msg);
@@ -75,9 +75,7 @@ const Home: NextPage = () => {
     });
     // console.log(m);
     setCurrentHistory(
-      (beforeValues) => {
-        return [...beforeValues, ...m]
-      }
+      (beforeValues) => [...beforeValues, ...m]
     );
   }
 
@@ -85,13 +83,14 @@ const Home: NextPage = () => {
   const stderr = (msg: string) => {
     console.log('std_err->'+msg);
     setCurrentHistory(
-      (beforeValues) => {
-        return [...beforeValues, <p className="text-red-500">{msg}</p>]
-      }
+      (beforeValues) => [...beforeValues, <p className="text-red-500">{msg}</p>]
+      
     );
   }
 
-  const stdin = () => "";
+  const stdin = () => {
+    return '';
+  };
 
   const bashInterPriter = BashInterPriter.getInstance(stdin, stdout, stderr);
 
@@ -105,7 +104,7 @@ const Home: NextPage = () => {
 
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      const promptStr = promptRef.current?.innerText || '';
+      const promptStr = promptRef.current?.innerHTML || '';
 
       setLogs((beforeValues) => { return [...beforeValues, promptStr + command] });
 
@@ -141,6 +140,10 @@ const Home: NextPage = () => {
         {/* <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet"></link> */}
       </Head>
       <style jsx>{`
+      ::selection {
+        color: #fff;
+        background: grey;
+      }
       .output::-webkit-scrollbar{
         width:5px;
         
@@ -185,12 +188,12 @@ const Home: NextPage = () => {
 
               
               {logs.map((value, index) => {
-                return <div key={index} className={terminalStyles.log}>{value}</div>
+                return typeof(value)==='string'? <div dangerouslySetInnerHTML={{__html:value}}></div>: <div key={index} className={terminalStyles.log}>{value}</div>
               })}
 
               { !loading &&
               <div className="">
-                <p ref={promptRef} className='inline'>{bashInterPriter.getCurentUser()}@{'anonymous'}:{bashInterPriter.getCwd()}{"$"} </p>
+                <p ref={promptRef} className='inline'><span className='text-orange-500'>{bashInterPriter.getCurentUser()}</span>@<span className='text-blue-600'></span>:<span className='text-green-500'>{bashInterPriter.getCwd()}</span>{"$"} </p>
                 <input ref={inputForm} value={command} onChange={onInputChange} onKeyDown={onInputKeyDown} type={'text'} className="inline px-0 text-white bg-black border-none focus:outline-none" />
                 {/* <div className='w-1 px-1 animate-ping'></div> */}
               </div>
