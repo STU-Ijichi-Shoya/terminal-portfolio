@@ -1,3 +1,14 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:tailwindcss/recommended"
+  ],
+  "plugins": ["prettier"],
+    // tailwind.config.js などの config ファイル、ESLint の対象外にする
+  "ignorePatterns": [
+      "*.config.js"
+    ],
+  "rules": {
+      "prettier/prettier": "error",
+  }
 }
