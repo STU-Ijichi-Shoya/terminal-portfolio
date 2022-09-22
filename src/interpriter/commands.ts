@@ -28,7 +28,7 @@ function Ls(stdin:StdIn,stdout:StdOut,stderr:StdErr,command:string[]){
             return
         default:
             if(command[i][0]=='-'){
-                stderr(' ls: invalid option -- '+command[i].slice(1));
+                stderr(' ls: invalid option '+command[i].slice(1));
                 stderr(' Try \'ls --help\' for more information.');
                 return
             }
@@ -40,13 +40,16 @@ function Ls(stdin:StdIn,stdout:StdOut,stderr:StdErr,command:string[]){
     const dir=filesystem.getInstance().read(absDirPath);
 
     if(dir instanceof Dirctory){
-        const files=dir.content;
-
+        let files=dir.content;
+        if(!allfileOption){
+            files=files.filter(f=>f.name.charAt(0)!='.')
+        }
         if(detailOption){
             const filenum=files.length;
             files.forEach((file)=>{
                 const permissionBit=('000000000'+file.permission.toString(2)).slice(-9);
-                let bit:string='rwxrwxrwx'.split('').map((bit,idx)=>{permissionBit.charAt(idx)=='1'?bit:'-'}).join('');
+                console.log(file.permission.toString(2));
+                let bit:string='rwxrwxrwx'.split('').map((bit,idx)=>{return permissionBit.charAt(idx)=='1'?bit:'-'}).join('');
 
                 switch(file.type){
                     case 'directory':
@@ -86,7 +89,57 @@ function echo(stdin:StdIn,stdout:StdOut,stderr:StdErr,command:string[]){
     stdout(command.slice(1).join(' '));
 }
 
+function cat(stdin:StdIn,stdout:StdOut,stderr:StdErr,command:string[]){
+    let show_all=false;
+    let show_number=false;
+    let files:string[]=[];
+    for(let arg of command.slice(1)){
+        switch(arg){
+            case '-A':
+            case '--show-all':
+                show_all=true;
+                break
+            case '-n':
+            case '--number':
+                show_number=true;
+                break
+            case '--help':
+                stdout('Usage: cat [OPTION]... [FILE]...');
+                stdout('Concatenate FILE(s) to standard output.')
+                stdout('');
+                stdout('    -A, --show-all           equivalent to -vET')
+                stdout('    -n, --number             number all output lines')
+                return
+            default:
+                if(arg.charAt(0)=='-'){
+                    stderr(' cat: invalid option '+arg);
+                    stderr(' Try \'cat --help\' for more information.');
+                    return
+                }
+                files.push(arg);
+        }
+    }
+    let numberCount=0;
+    for(let fileRefpath of files){
+        let filepath=filesystem.absPath(command[0],fileRefpath);
+        let file=filesystem.getInstance().read(filepath);
+        if(!!file && file.type!='directory'){
+            let out=`${file.content}`;
+            if(show_number)
+                out=`\t${++numberCount} ${out}`;
+            if(show_all){
+                out+='$';
+            }
+            stdout(out);
+        }
+        else{
+            stderr(`cat: ${fileRefpath}: No such file or directory`)
+        }
+    }
+}
+
 export const commands={
-    'ls':Ls,
-    'echo':echo,
+    ls:Ls,
+    echo:echo,
+    cat:cat
 }

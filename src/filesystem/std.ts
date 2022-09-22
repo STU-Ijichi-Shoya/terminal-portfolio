@@ -86,6 +86,7 @@ class LocalStorageDevice implements Device{
     }
 }
 
+type FILE = string;
 
 class Dirctory implements File{
     name:string;
@@ -111,35 +112,48 @@ class filesystem{
     private static instance: filesystem;
 
     private Device:Device=new HashDevice();
-        
+    
+    public static parsePath(path:string){
+        if(path=='/'){
+            return ['']
+        }
+        return path.split('/')
+    }
     public static absPath(refPath:string,relativePath:string){
         if(refPath.charAt(0)!='/'){
             throw Error('refPathが誤り')
         }
         const relativePathArray=relativePath.split('/');
-        let stack=[...relativePathArray];
+
+        let stack:string[]=[];
+        //相対パスの場合は，カレントディレクリから絶対位置を知る必要がある
         if(relativePath[0]!='/'){
-            stack=[...refPath.split('/'),...stack]
+            if(refPath=='/')
+                stack=[''];// '/'.split()===['','']になるため 
+            else{
+                stack=refPath.split('/');
+            }
+        }//絶対パスの場合は，知る必要がなく，..と.を正規化するだけでよい．
+        relativePathArray.forEach(
+            (v)=>{
+                if(v=='..'){
+                    stack.pop();
+                }else if(v=='.'||v==''){
+                    //pass
+                }else{
+                    stack.push(v);
+                }
+            }
+        )
+       
+        let r=stack.join('/');
+       
+        if(r.charAt(0)!='/'){
+            r='/'+r;
+        
         }
 
-        let index=1;
-        while(stack){
-            // console.log(stack[index])
-            if(stack[index]=='..'){
-                stack.splice(index-1,2); //refPathは，絶対パスなので，1以上の値が保障される．
-                --index;
-            }else if(stack[index]=='.'){
-                stack.splice(index,1);
-            }
-            else{
-                index++;
-            }
-            if(index>=stack.length){
-                break;
-            }
-        }
-    
-        return stack.join('/');
+        return r;
         
     }
 
@@ -152,8 +166,11 @@ class filesystem{
 
         usr_bin.addFile(new ExecutableFile('ls',0o777,commands.ls));
         usr_bin.addFile(new ExecutableFile('echo',0o777,commands.echo));
+        usr_bin.addFile(new ExecutableFile('cat',0o777,commands.cat));
+        
+        const guest_dir=new Dirctory('guest').addFile(new File('about.txt',0o666,'こんにちは')).addFile(new File('WTF.txt',0o666,'Hello')).addFile(new File('.secret😇.txt',0o666,'this is secret file'))
 
-        rootDir.addFile(new Dirctory('home').addFile(new Dirctory('guest'))); // /home/you
+        rootDir.addFile(new Dirctory('home').addFile(guest_dir)); // /home/you
         rootDir.addFile(new Dirctory('usr').addFile(usr_bin)); // /usr/bin ここに組み込みコマンドを入れる
         rootDir.addFile(new Dirctory('bin'));
         rootDir.addFile(new Dirctory('etc'));
@@ -210,6 +227,31 @@ class filesystem{
     public getRoot():(Dirctory|null){
         return this.root;
     }
+
+    public pipe(){
+
+    }
+    public dup(){
+
+    }
+
+    public std_write(fid:FILE,content:any){
+
+    }
+
+    public std_get(fid:FILE){
+
+    }
+
+    public std_close(fid:FILE){
+
+    }
+
+    public std_open(fid:FILE){
+
+    }
+
+    private manageFIDMap=new Map<FILE,string>;
     
 }
 
